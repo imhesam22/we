@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 500 200">
+  <defs>
+    <linearGradient id="gradW" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8A2BE2"/>
+      <stop offset="55%" stop-color="#4A90E2"/>
+      <stop offset="100%" stop-color="#00C2FF"/>
+    </linearGradient>
+
+    <linearGradient id="gradE" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4AF37"/>
+      <stop offset="60%" stop-color="#FFB84D"/>
+      <stop offset="100%" stop-color="#E07B2D"/>
+    </linearGradient>
+
+    <!-- گرادیان جدید برای ستاره قرمز -->
+    <linearGradient id="gradStar" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B6B"/>
+      <stop offset="50%" stop-color="#FF4757"/>
+      <stop offset="100%" stop-color="#E84118"/>
+    </linearGradient>
+    
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- ستاره با رنگ قرمز جدید -->
+  <polygon
+    points="120,60 128.208,97.44 158.58,74.04 140.784,108.00 179.10,109.584 143.64,124.166
+            171.96,150.000 135.432,138.384 140.52,176.400 120.00,144.000 99.48,176.400 104.568,138.384
+            68.04,150.000 96.36,124.166 60.90,109.584 99.216,108.000 81.42,74.040 111.792,97.440"
+    fill="url(#gradStar)" opacity="0.95" filter="url(#softShadow)"
+    transform="translate(160,10) scale(0.8)"/>
+
+  <text x="125" y="140" font-size="130" fill="url(#gradW)" font-family="Georgia, serif" letter-spacing="-6">
+    W
+  </text>
+
+  <text x="245" y="140" font-size="130" fill="url(#gradE)" font-family="Georgia, serif" letter-spacing="-3">
+    E
+  </text>
+</svg>
