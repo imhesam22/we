@@ -1,107 +1,55 @@
-// backend/server.js - آپدیت شده
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import morgan from 'morgan';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 import connectDB from './config/database.js';
+import adminRoutes from './routes/admin.js';
 import authRoutes from './routes/auth.js';
 import musicRoutes from './routes/music.js';
-import adminRoutes from './routes/admin.js';
-import uploadRoutes from './routes/uploads.js';
+import { authenticate } from './middleware/auth.js';
+
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
-const PORT = process.env.PORT || 5222;
+const PORT = process.env.PORT || 3000;
 
-// Connect to MongoDB با هندلینگ خطا
-const startServer = async () => {
-  try {
-    console.log('🚀 Starting WE Music Backend Server...');
-    
-    await connectDB();
-    
-    // Middleware
-    app.use(cors({
-      origin: ['http://localhost:5173', 'http://localhost:3000'],
-      credentials: true
-    }));
-    app.use(express.json());
+// ---------- Middlewares ----------
+app.use(morgan('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-    // Request logging
-    app.use((req, res, next) => {
-      console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-      next();
-    });
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  credentials: true
+}));
 
-    // Routes
-    app.use('/api/auth', authRoutes);
-    app.use('/api/music', musicRoutes);
-    app.use('/api/admin', adminRoutes);
-    app.use('/api/uploads', uploadRoutes); 
+// ---------- Routes ----------
+app.use('/api/auth', authRoutes);
+app.use('/api/music', musicRoutes);
+app.use('/api/admin', adminRoutes);
 
-    // Health check extended
-    app.get('/api/health', (req, res) => {
-      const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-      
-      res.json({
-        success: true,
-        message: '🚀 WE Backend Server is running!',
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV,
-        database: dbStatus,
-        uptime: process.uptime()
-      });
-    });
+// ---------- Health ----------
+app.get('/api/health', (_, res) => {
+  res.json({ success: true });
+});
 
-    // Database health check
-    app.get('/api/health/db', (req, res) => {
-      const dbState = mongoose.connection.readyState;
-      const states = {
-        0: 'disconnected',
-        1: 'connected', 
-        2: 'connecting',
-        3: 'disconnecting'
-      };
-      
-      res.json({
-        database: {
-          state: states[dbState],
-          readyState: dbState,
-          host: mongoose.connection.host,
-          name: mongoose.connection.name
-        }
-      });
-    });
+// ---------- SPA fallback (آخر از همه) ----------
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/index.html'));
+});
 
-    // 404 handler
-    app.use((req, res) => {
-      res.status(404).json({
-        success: false,
-        error: 'Endpoint not found'
-      });
-    });
-
-    // Error handler
-    app.use((error, req, res, next) => {
-      console.error('💥 Server Error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
-    });
-
-    app.listen(PORT, () => {
-      console.log(`\n🎧 WE Music Backend Server Started!`);
-      console.log(`📍 Port: ${PORT}`);
-      console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-      console.log(`🚀 API URL: http://localhost:${PORT}/api`);
-      console.log(`❤️  Health Check: http://localhost:${PORT}/api/health`);
-      console.log(`📊 DB Health: http://localhost:${PORT}/api/health/db\n`);
-    });
-
-  } catch (error) {
-    console.error('💥 Failed to start server:', error);
-    process.exit(1);
-  }
+// ---------- Start ----------
+const start = async () => {
+  await connectDB();
+  app.listen(PORT, () =>
+    console.log(`🚀 Server running on http://localhost:${PORT}`)
+  );
 };
-
-startServer();
+start();

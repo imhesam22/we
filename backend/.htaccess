@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# فعال کردن Proxy برای Node.js
+RewriteRule ^$ http://127.0.0.1:3000/ [P,L]
+RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+
+# برای فایل‌های استاتیک
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]

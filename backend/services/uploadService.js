@@ -1,83 +1,74 @@
-// backend/services/uploadService.js - آپدیت نهایی
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
-import sharp from 'sharp';
 
-// ایجاد پوشه‌های لازم
-const uploadsDir = './uploads';
-const audioDir = './uploads/audio';
-const imagesDir = './uploads/images';
+/* =========================
+   🧠 HELPERS
+========================= */
+export const sanitizeFilename = (name = '') => {
+  return name
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')          // space → -
+    .replace(/[^a-z0-9.-]/g, '')   // remove unsafe chars
+    .replace(/-+/g, '-');
+};
 
-[uploadsDir, audioDir, imagesDir].forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
+export const getFileExtension = (filename = '') => {
+  return path.extname(filename).toLowerCase().replace('.', '');
+};
 
-// تنظیمات multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (file.mimetype.startsWith('audio/')) {
-      cb(null, audioDir);
-    } else if (file.mimetype.startsWith('image/')) {
-      cb(null, imagesDir);
-    } else {
-      cb(new Error('Invalid file type'), null);
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  }
-});
+/* =========================
+   📦 MULTER CONFIG
+========================= */
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  const audioTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg'];
-  const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  
-  if (audioTypes.includes(file.mimetype) || imageTypes.includes(file.mimetype)) {
+  const allowedMimeTypes = [
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/wav',
+    'audio/ogg',
+    'image/jpeg',
+    'image/png',
+    'image/webp'
+  ];
+
+  if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Only audio and image files are allowed'), false);
+    cb(new Error(`Unsupported file type: ${file.mimetype}`));
   }
 };
 
-export const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
+const upload = multer({
+  storage,
   limits: {
-    fileSize: 50 * 1024 * 1024,
-  }
+    fileSize: 100 * 1024 * 1024, // 100MB
+    files: 2
+  },
+  fileFilter
 });
 
+/* =========================
+   🚀 EXPORTS
+========================= */
 export const uploadMusicFiles = upload.fields([
-  { name: 'audioFile', maxCount: 1 },
-  { name: 'coverImage', maxCount: 1 }
+  { name: 'audio', maxCount: 1 },
+  { name: 'cover', maxCount: 1 }
 ]);
 
-export const processImage = async (filePath) => {
-  try {
-    const processedPath = filePath.replace(path.extname(filePath), '-processed.jpg');
-    
-    await sharp(filePath)
-      .resize(500, 500)
-      .jpeg({ quality: 80 })
-      .toFile(processedPath);
-    
-    fs.unlinkSync(filePath);
-    
-    return processedPath;
-  } catch (error) {
-    console.error('Image processing error:', error);
-    return filePath;
-  }
+/* =========================
+   🧪 OPTIONAL HELPERS
+========================= */
+export const getFileUrl = (filename, type = 'audio') => {
+  if (!filename) return '';
+  return type === 'audio'
+    ? `/uploads/audio/${filename}`
+    : `/uploads/images/${filename}`;
 };
 
-// 🔥 آپدیت نهایی: ساخت URL درست
-export const getFileUrl = (filename, type = 'audio') => {
-  const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT}`;
-  
-  // 🔥 مطمئن شو مسیر درست هست
-  return `${baseUrl}/api/uploads/${type}/${filename}`;
+export const processImage = (imageUrl) => {
+  // برای future optimization (resize, CDN, ...)
+  return imageUrl;
 };
